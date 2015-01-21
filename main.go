@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"regexp"
@@ -9,14 +10,14 @@ import (
 )
 
 var (
-	redisHost = ":6379"
+	redisHost = flag.String("host", ":6379", "redis server host")
 )
 
 func main() {
+	flag.Parse()
+	fmt.Println("Connecting to redis at ", *redisHost)
 
-	fmt.Println("Connecting to redis...")
-
-	c, err := redis.Dial("tcp", redisHost)
+	c, err := redis.Dial("tcp", *redisHost)
 	defer c.Close()
 	if err != nil {
 		fmt.Println(err)
