@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 )
 
 var (
@@ -38,13 +40,15 @@ func main() {
 	stats := make(map[string]*Key)
 
 	keyCount := len(keys)
-	fmt.Println("Processing ", keyCount, "keys, hold on...")
 	pi := 0
 
 	for _, key := range keys {
 		pi += 1
 		if pi%100 == 0 {
-			fmt.Println("Processing", pi, "of", keyCount)
+			fmt.Printf("\rProcessing %d/%d keys, stay tuned...", pi, keyCount)
+		}
+		if pi == keyCount {
+			fmt.Println("")
 		}
 		var keyValue, ok = key.([]byte)
 		if ok {
@@ -66,10 +70,7 @@ func main() {
 
 			stats[keyName].r = i
 
-			d, err := redis.String(c.Do("DEBUG", "OBJECT", string(keyValue)))
-			if err != nil {
-				fmt.Println(err)
-			}
+			d, _ := redis.String(c.Do("DEBUG", "OBJECT", string(keyValue)))
 
 			r, _ := regexp.Compile("serializedlength:(.*?) ")
 			text := r.FindString(d)
@@ -90,10 +91,21 @@ func main() {
 
 	fmt.Println("All the keys processed")
 
-	fmt.Println("key name", ",", "repetition", ",", "used memory")
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 8, 0, '\t', 0)
+
+	fmt.Fprintln(w, "key name", "\t", "repetition", "\t", "used memory", "\t")
+
+	var totalMemoryUsed int64
+
 	for keyName, values := range stats {
-		fmt.Println(keyName, ",", values.r, ",", values.m/1000000)
+		fmt.Fprintln(w, keyName, "\t", values.r, "\t", values.m, "\t")
+		totalMemoryUsed += values.m
 	}
+	fmt.Fprintln(w)
+	w.Flush()
+
+	fmt.Println("Total memory used: ", totalMemoryUsed)
 
 	fmt.Println("EOF")
 
