@@ -37,7 +37,15 @@ func main() {
 
 	stats := make(map[string]*Key)
 
+	keyCount := len(keys)
+	fmt.Println("Processing ", keyCount, "keys, hold on...")
+	pi := 0
+
 	for _, key := range keys {
+		pi += 1
+		if pi%100 == 0 {
+			fmt.Println("Processing", pi, "of", keyCount)
+		}
 		var keyValue, ok = key.([]byte)
 		if ok {
 			parts := strings.Split(string(keyValue), ":")
