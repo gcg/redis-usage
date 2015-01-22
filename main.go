@@ -66,13 +66,15 @@ func main() {
 			r, _ := regexp.Compile("serializedlength:(.*?) ")
 			text := r.FindString(d)
 
-			mem := strings.Trim(strings.Split(text, ":")[1], " ")
-			memNumber, err := strconv.ParseInt(mem, 0, 64)
-
-			if err == nil {
-				m := stats[keyName].m
-				m += memNumber
-				stats[keyName].m = m
+			memoryBytesRaw := strings.Split(text, ":")
+			if len(memoryBytesRaw) == 2 {
+				mem := strings.Trim(memoryBytesRaw[1], " ")
+				memNumber, err := strconv.ParseInt(mem, 0, 64)
+				if err == nil {
+					m := stats[keyName].m
+					m += memNumber
+					stats[keyName].m = m
+				}
 			}
 
 		}
